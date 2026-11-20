@@ -1,0 +1,5 @@
+# Runtime dependencies. Pinned exactly so local, Docker, and CI resolve the same versions.
+Django==5.2.19
+django-environ==0.14.0
+psycopg[binary]==3.3.9
+structlog==26.1.0

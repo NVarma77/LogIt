@@ -1,0 +1,54 @@
+name: CI
+
+on: push
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_USER: logit
+          POSTGRES_PASSWORD: logit
+          POSTGRES_DB: logit
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U logit -d logit"
+          --health-interval 2s
+          --health-timeout 3s
+          --health-retries 15
+
+    env:
+      DATABASE_URL: postgres://logit:logit@localhost:5432/logit
+      DJANGO_SECRET_KEY: ci-only-not-a-secret
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements-dev.txt
+
+      - name: Install dependencies
+        run: pip install -r requirements-dev.txt
+
+      - name: Lint
+        run: ruff check .
+
+      - name: Format
+        run: ruff format --check .
+
+      - name: Type check
+        run: mypy .
+
+      - name: Migrations are up to date
+        # Fails if a model changed without a matching migration.
+        run: python manage.py makemigrations --check --dry-run
+
+      - name: Tests
+        run: pytest

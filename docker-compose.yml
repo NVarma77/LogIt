@@ -1,0 +1,38 @@
+# Local development: Django + Postgres.
+#   docker compose up --build              # app at http://localhost:8000
+#   docker compose run --rm web pytest     # tests against the real Postgres
+services:
+  db:
+    # Switches to pgvector/pgvector:pg18 at the embeddings phase.
+    image: postgres:18
+    environment:
+      POSTGRES_USER: logit
+      POSTGRES_PASSWORD: logit
+      POSTGRES_DB: logit
+    volumes:
+      - pgdata:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U logit -d logit"]
+      interval: 2s
+      timeout: 3s
+      retries: 15
+
+  web:
+    build: .
+    # Running migrations on start is a dev convenience; deploys will run them as a separate step.
+    command: sh -c "python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
+    environment:
+      DATABASE_URL: postgres://logit:logit@db:5432/logit
+      DJANGO_SECRET_KEY: dev-only-change-me
+      DJANGO_DEBUG: "true"
+      DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app  # Live code reload.
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  pgdata:

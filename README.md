@@ -110,12 +110,23 @@ Done when: testers keep logging without being prompted.
 - Entries per user per week
 
 
-## Tech Stack (TBD)
+## Tech Stack
 
-Suggested starting point:
-- Web frontend first (faster to iterate than mobile)
-- Postgres with pgvector for relational data and embeddings in one database
-- A small open sentence-embedding model (e.g., all-MiniLM-L6-v2) or an embeddings API
+Django monolith (ORM, built-in auth, admin), server-rendered templates + HTMX, Postgres with
+pg_trgm (pgvector at the embeddings phase), pytest, Docker Compose, GitHub Actions.
+Rationale: [docs/decisions/001-stack.md](docs/decisions/001-stack.md).
+
+### Running locally
+
+    cp .env.example .env
+    docker compose up --build              # http://localhost:8000/admin/
+    docker compose run --rm web pytest     # tests against real Postgres
+
+Checks CI runs on every push: `ruff check .`, `ruff format --check .`, `mypy .`,
+`python manage.py makemigrations --check --dry-run`, `pytest`.
+
+Design decisions live in [docs/decisions/](docs/decisions/); the AI-assistance log is
+[docs/ai-log.md](docs/ai-log.md).
 
 
 ## Open Questions
